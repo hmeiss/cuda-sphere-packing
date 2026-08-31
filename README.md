@@ -1,8 +1,8 @@
-# Triangle Mesh to Sphere Packing (CUDA)
+# CUDA Sphere Packing of Triangle Meshes
 
 Fill a closed triangle mesh with non-overlapping spheres, on the GPU. Given a watertight `.obj`,
-this produces a packing of variable-radius spheres contained in the mesh volume, using a **greedy
-voxel-grid** algorithm implemented end-to-end in CUDA. Packing 20,000 spheres into a 100k-triangle
+this produces a packing of variable-radius spheres contained in the mesh volume, using a GPU-accelerated greedy voxel-grid algorithm implemented in CUDA.
+Packing 20,000 spheres into a 100k-triangle
 mesh takes under half a second.
 
 Sphere packings of this kind are used as volumetric proxies for collision detection, physically
@@ -20,7 +20,7 @@ original geometry.
 </tr>
 <tr>
   <td><code>hard_geometry.obj</code>, 100k triangles</td>
-  <td>2 million spheres, 90.64% of mesh volume, 65 s</td>
+  <td>2 million spheres, 90.64% density, 65 s, gridRes=1024</td>
 </tr>
 </table>
 
@@ -36,8 +36,8 @@ compiler, and an NVIDIA GPU.
 cuBQL is a git submodule, so `--recursive` is required — a plain `git clone` will not build.
 
 ```bash
-git clone --recursive git@github.com:hmeiss/TriangleMeshToSpherePackingCUDA.git
-cd TriangleMeshToSpherePackingCUDA
+git clone --recursive https://github.com/hmeiss/cuda-sphere-packing.git
+cd cuda-sphere-packing
 
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
@@ -102,7 +102,7 @@ post-pass is needed.
 > step 2*. From the first placement onward the update in step 3 overwrites voxels with their
 > clearance to placed spheres, so the grid is a free-radius (clearance) field, not an SDF of the
 > mesh. The code and the CLI flag still say `sdf` in many places for historical reasons; the
-> paper's *greedy voxel-grid* is the accurate description of the method as a whole.
+> *greedy voxel-grid* is the accurate description of the method as a whole.
 
 ### Selection loops
 
