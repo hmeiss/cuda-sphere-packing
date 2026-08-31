@@ -1,0 +1,3 @@
+[submodule "external/cuBQL"]
+	path = external/cuBQL
+	url = https://github.com/NVIDIA/cuBQL
