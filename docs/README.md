@@ -4,7 +4,7 @@ This document explains how the packer works, how the code is organized, and how 
 made. For building and running the tool, see the [main README](../README.md).
 
 - [Method](#method)
-  - [Selection loops](#selection-loops)
+  - [Sphere selection](#sphere-selection)
   - [Distance computation](#distance-computation)
 - [Memory](#memory)
 - [Project structure](#project-structure)
@@ -41,7 +41,7 @@ spheres never overlap and never leave the mesh**, without any extra checks or cl
 > spheres, so the grid no longer describes the mesh. The code and the CLI still use the name
 > `sdf` in many places for historical reasons.
 
-### Selection loops
+### Sphere selection
 
 There are two ways to pick spheres.
 
@@ -66,11 +66,15 @@ cost is one full-grid search per sphere, which gets slow for large sphere counts
 4. One kernel updates *all* remaining candidates against the whole batch. Candidates with no room
    left are removed, and the loop repeats.
 
-The first sphere of each batch is the true maximum, so it matches what the plain greedy loop
-would pick. The rest of the batch can differ slightly. They are checked for overlap with earlier
-spheres in the batch, but their values are not updated during the batch, so the order may differ
-from plain greedy. In return, one sort covers about 1000 spheres instead of one search per
-sphere. This is what makes hundreds of thousands of spheres practical.
+The result is close to plain greedy but not identical. Within a round, candidates are ranked by
+their values at the start of the round. A candidate that is skipped because it overlaps an
+accepted sphere would, in plain greedy, only shrink and might still be picked before some of the
+spheres accepted later in the round. Once one placement differs, every later round starts from a
+different grid, so the two packings drift apart. Ties are also broken in a different order.
+
+The benefit is speed. Plain greedy searches the whole grid once for every sphere. The batched
+loop sorts the candidates once per round and places about 1000 spheres from that single sort.
+This is what makes hundreds of thousands of spheres practical.
 
 ### Distance computation
 

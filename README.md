@@ -1,9 +1,8 @@
 # CUDA Sphere Packing of Triangle Meshes
 
-This tool fills a closed triangle mesh with spheres of different sizes. The spheres don't overlap
-and stay inside the mesh. It reads a watertight `.obj` file and runs a greedy voxel-grid
-algorithm on the GPU with CUDA. Packing 20,000 spheres into a mesh with 100k triangles takes
-under half a second.
+A CUDA implementation of greedy voxel-grid sphere packing for triangle meshes. It fills a
+watertight `.obj` mesh with spheres of different sizes that don't overlap and stay inside the
+mesh. Packing 20,000 spheres into a mesh with 100k triangles takes under half a second.
 
 Sphere packings like this are used to approximate a mesh's volume in collision detection,
 physics simulation and haptic rendering, because testing spheres is much cheaper than testing
@@ -86,7 +85,7 @@ original mesh, also drop in `data/hard_geometry.obj` and use *Hide Mesh* to swit
 
 </details>
 
-## How it works
+## Method
 
 A uniform grid is placed over the mesh. Each voxel starts with its distance to the mesh surface,
 which is the radius of the largest sphere that fits at that point. The packer then repeats two
@@ -98,8 +97,13 @@ value[v] ← min(value[v], ‖center[v] − c‖ − r)
 ```
 
 A voxel's value is never larger than its distance to the surface or to any placed sphere. So the
-spheres never overlap and never leave the mesh. The batched modes are faster because they place
-about 1000 spheres per round instead of one.
+spheres never overlap and never leave the mesh.
+
+Placing one sphere at a time needs a search over the whole grid for every sphere. The batched
+modes (`cubql` and `multi2`) instead sort all remaining voxels by value once per round and accept
+the top ~1000, skipping any that overlap each other. This is much faster for large sphere
+counts. The result is close to strict greedy but not identical. Details are in
+[Sphere selection](docs/README.md#sphere-selection).
 
 More detail on the algorithm, memory use and code layout is in [docs/README.md](docs/README.md).
 
@@ -167,7 +171,7 @@ Measured on an RTX 3080 Ti (12 GB) with the test mesh in `cubql` mode, including
 
 `gridRes` sets how fine the packing can get. The smallest sphere is about one voxel wide, and
 sphere centers always sit on voxel centers. For more than about 10,000 spheres, use `cubql` or
-`multi2`. Memory grows with `gridRes³`, see [Memory](docs/README.md#memory) for details.
+`multi2`. Memory grows with `gridRes³`. See [Memory](docs/README.md#memory) for details.
 
 ## Limitations
 
